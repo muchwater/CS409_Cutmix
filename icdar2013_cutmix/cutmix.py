@@ -544,7 +544,7 @@ def crop_img_text(idx, bbox, crop, json_data):
     img2_id = idx - 99
     for data in initial:
         if data["image_id"] == img2_id:
-            # data["bbox"] = list(map(int, data["bbox"]))
+            data["bbox"] = list(map(int, data["bbox"]))                                     # 참조하는 bbox 값이 float type이라서 int로 변경
             if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + bbox[2]):
                 if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):   # crop 영역이 기존 bbox 안에 들어가는 경우
                     for i in range(len(data["bbox"])):                                      # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
@@ -561,11 +561,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                     data["image_id"] = image_id
                     data["id"] = text_id
                     text_id += 1
-                    data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                    data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                     datasets["annotations"].append(data)
                 else:
-                    if data["category_id"] == 1 and data["bbox"][1] <= (crop[1] + bbox[3]):             
-                        for i in range(len(data["bbox"])):
+                    if data["category_id"] == 1 and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.01:             
+                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                             if i%2 == 0:
                                 data["bbox"][i] -= cropx1
                             else:
@@ -580,11 +580,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
-                        data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
                     if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
                         if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                            for i in range(len(data["bbox"])):
+                            for i in range(len(data["bbox"])):                              # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                                 if i%2 == 0:
                                     data["bbox"][i] -= cropx1
                                 else:
@@ -599,13 +599,13 @@ def crop_img_text(idx, bbox, crop, json_data):
                             data["image_id"] = image_id
                             data["id"] = text_id
                             text_id += 1
-                            data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                            data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                             datasets["annotations"].append(data)
 
             else:
                 if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):
-                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]):             
-                        for i in range(len(data["bbox"])):
+                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and bbox[2]*bbox[3] >= data["area"] * 0.01:             
+                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                             if i%2 == 0:
                                 data["bbox"][i] -= cropx1
                             else:
@@ -620,11 +620,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
-                        data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
                     if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
                         if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
-                            for i in range(len(data["bbox"])):
+                            for i in range(len(data["bbox"])):                              # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                                 if i%2 == 0:
                                     data["bbox"][i] -= cropx1
                                 else:
@@ -639,11 +639,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                             data["image_id"] = image_id
                             data["id"] = text_id
                             text_id += 1
-                            data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                            data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                             datasets["annotations"].append(data)
                 else:
-                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and data["bbox"][1] <= (crop[1] + bbox[3]):             
-                        for i in range(len(data["bbox"])):
+                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.01:             
+                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                             if i%2 == 0:
                                 data["bbox"][i] -= cropx1
                             else:
@@ -659,12 +659,12 @@ def crop_img_text(idx, bbox, crop, json_data):
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
-                        data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
                     if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
                         if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
                             if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                                for i in range(len(data["bbox"])):
+                                for i in range(len(data["bbox"])):                          # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
                                     if i%2 == 0:
                                         data["bbox"][i] -= cropx1
                                     else:
@@ -680,7 +680,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                                 data["image_id"] = image_id
                                 data["id"] = text_id
                                 text_id += 1
-                                data["area"] = (data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1])
+                                data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                                 datasets["annotations"].append(data)
                     
 
