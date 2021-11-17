@@ -400,8 +400,9 @@ for img in images:
     height = img["height"]
 
     img1 = Image.open(img_name).resize((300, 300))
-    img1.save("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg")
+    img1.save("/home/ubuntu/EfficientNet/datasets/icdar2013/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg")
 
+    img["file_name"] = "/home/ubuntu/EfficientNet/datasets/icdar2013/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg"
     img["width"] = 300
     img["height"] = 300
     datasets["images"].append(img)
@@ -425,8 +426,8 @@ for img in images:
 
             datasets["annotations"].append(data)
 
-with open("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train_pretty.json", 'w') as outfile:
+with open("/home/ubuntu/Efficientnet/datasets/icdar2013/train_pretty.json", 'w') as outfile:
     json.dump(datasets, outfile, indent=4)
 
-with open("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train.json", 'w') as outfile:
+with open("/home/ubuntu/Efficientnet/datasets/icdar2013/train.json", 'w') as outfile:
     json.dump(datasets, outfile)
