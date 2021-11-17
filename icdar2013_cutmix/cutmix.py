@@ -396,6 +396,12 @@ def cut_generator(idx):
     # rand_ind = random.randint(100, 328)
     rand_ind2 = random.randint(100, 328)
     # rand_ind2 = 240
+    if rand_ind == rand_ind2: 
+        if rand_ind2 < 328:
+            rand_ind2 += 1
+        else:
+            rand_ind2 = 222
+            
     image_name1 = image_root + str(rand_ind) + ".jpg"
     image_name2 = image_root + str(rand_ind2) + ".jpg"
     img1 = Image.open(image_name1)
@@ -708,7 +714,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(5):
+for i in range(229):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)

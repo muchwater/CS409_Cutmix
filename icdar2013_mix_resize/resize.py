@@ -426,8 +426,8 @@ for img in images:
 
             datasets["annotations"].append(data)
 
-with open("/home/ubuntu/Efficientnet/datasets/icdar2013/train_pretty.json", 'w') as outfile:
+with open("/home/ubuntu/EfficientNet/datasets/icdar2013/train_pretty.json", 'w') as outfile:
     json.dump(datasets, outfile, indent=4)
 
-with open("/home/ubuntu/Efficientnet/datasets/icdar2013/train.json", 'w') as outfile:
+with open("/home/ubuntu/EfficientNet/datasets/icdar2013/train.json", 'w') as outfile:
     json.dump(datasets, outfile)

@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# image files without original icdar train files
+.icdar2013_cutmix/train_images/
+.icdar2013_cutmix/*.json
+.icdar2013_mix_resize/train_images/
+.icdar2013_mix_resize/*.json
