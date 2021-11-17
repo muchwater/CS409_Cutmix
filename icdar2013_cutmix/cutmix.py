@@ -392,7 +392,7 @@ def cut_generator(idx):
     global image_id
 
     image_root = "/home/ubuntu/TextFuseNet/datasets/icdar2013/train_images/ICDAR2013_Train_"
-    rand_ind = 99 + idx     # Train_100 부터 순서대로!
+    rand_ind = 99 + idx     
     # rand_ind = random.randint(100, 328)
     rand_ind2 = random.randint(100, 328)
     # rand_ind2 = 240
@@ -404,7 +404,6 @@ def cut_generator(idx):
     W2, H2 = img2.size
     size = [W1, H1, W2, H2]
 
-    # TODO: 기존의 bbox 안 겹치게 랜덤한 위치 뽑기
     bbx1 = 0
     bbx2 = 0
     bby1 = 0
@@ -416,18 +415,15 @@ def cut_generator(idx):
     initial = bbox_data["annotations"]
     for data in initial:
         if data["image_id"] == image_id:
-        # if data["image_id"] == (rand_ind - 99):
-            # 일단 (0,0)에서 첫번째 bbox까지만 덮어 씌우는 걸로!
             bbx2 = int(data["bbox"][0])
             bby2 = int(data["bbox"][1])
             break
     # bbx1, bbx2, bby1, bby2 = min(bbx1, bbx2), max(bbx1, bbx2), min(bby1, bby2), max(bby1, bby2)
 
-    # 좋은 덮어 쓸 영역 뽑아오기
     crop_img_idx = rand_ind2 - 99
     for data in initial:
         if data["image_id"] == crop_img_idx:
-            cropx1 = int(data["bbox"][0])    # JSON 파일 작성 편의를 위해서 Text 영역 바로 뽑기
+            cropx1 = int(data["bbox"][0])  
             cropy1 = int(data["bbox"][1])
             break
     
@@ -457,7 +453,6 @@ def image_dict(idx, size):
     image["id"] = idx
     return image
 
-# 안 겹치니까 필요 X
 # def overwrap_check(bbox, data, rate):
     global image_id
     global text_id
@@ -545,10 +540,10 @@ def crop_img_text(idx, bbox, crop, json_data):
     img2_id = idx - 99
     for data in initial:
         if data["image_id"] == img2_id:
-            data["bbox"] = list(map(int, data["bbox"]))                                     # 참조하는 bbox 값이 float type이라서 int로 변경
+            data["bbox"] = list(map(int, data["bbox"]))                                     
             if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + bbox[2]):
-                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):   # crop 영역이 기존 bbox 안에 들어가는 경우
-                    for i in range(len(data["bbox"])):                                      # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):   
+                    for i in range(len(data["bbox"])):                                      
                         if i%2 == 0:
                             data["bbox"][i] -= min(cropx1, data["bbox"][i])
                         else:
@@ -566,9 +561,9 @@ def crop_img_text(idx, bbox, crop, json_data):
                     datasets["annotations"].append(data)
                 else:
                     if data["category_id"] == 1 and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                        for i in range(len(data["bbox"])):                                  
                             if i%2 == 0:
-                                data["bbox"][i] -= min(cropx1, data["bbox"][i])                                   # 음수가 되는 경우가 생겨서 이를 방지
+                                data["bbox"][i] -= min(cropx1, data["bbox"][i])                                   
                             else:
                                 data["bbox"][i] -= min(cropy1, data["bbox"][i])
                         for j in range(len(data["segmentation"])):
@@ -577,15 +572,15 @@ def crop_img_text(idx, bbox, crop, json_data):
                                     data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
                                 else:
                                     data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][3] = crop[1] + bbox[3]                                 # category_id = 1 -> semantic bbox 라서 조정해서 추가
+                        data["bbox"][3] = crop[1] + bbox[3]                                 
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
+                    if data["category_id"] != 1:                                            
                         if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                            for i in range(len(data["bbox"])):                              # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                            for i in range(len(data["bbox"])):                              
                                 if i%2 == 0:
                                     data["bbox"][i] -= min(cropx1, data["bbox"][i])
                                 else:
@@ -606,7 +601,7 @@ def crop_img_text(idx, bbox, crop, json_data):
             else:
                 if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):
                     if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                        for i in range(len(data["bbox"])):                                  
                             if i%2 == 0:
                                 data["bbox"][i] -= min(cropx1, data["bbox"][i])
                             else:
@@ -617,15 +612,15 @@ def crop_img_text(idx, bbox, crop, json_data):
                                     data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
                                 else:
                                     data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][2] = crop[0] + bbox[2]                                 # category_id = 1 -> semantic bbox 라서 조정해서 추가
+                        data["bbox"][2] = crop[0] + bbox[2]                                
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
+                    if data["category_id"] != 1:                                            
                         if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
-                            for i in range(len(data["bbox"])):                              # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                            for i in range(len(data["bbox"])):                              
                                 if i%2 == 0:
                                     data["bbox"][i] -= min(cropx1, data["bbox"][i])
                                 else:
@@ -644,7 +639,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                             datasets["annotations"].append(data)
                 else:
                     if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                  # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                        for i in range(len(data["bbox"])):                                 
                             if i%2 == 0:
                                 data["bbox"][i] -= min(cropx1, data["bbox"][i])
                             else:
@@ -655,17 +650,17 @@ def crop_img_text(idx, bbox, crop, json_data):
                                     data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
                                 else:
                                     data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][2] = crop[0] + bbox[2]                                 # category_id = 1 -> semantic bbox 라서 조정해서 추가
+                        data["bbox"][2] = crop[0] + bbox[2]                                 
                         data["bbox"][3] = crop[1] + bbox[3]
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            # 10% 오차 안의 instance bbox는 조정해서 추가
+                    if data["category_id"] != 1:                                            
                         if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
                             if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                                for i in range(len(data["bbox"])):                          # offset 처리 : 이미지를 붙이는 영역이 (0,0)이므로 bbox 시작점 옮겨주기
+                                for i in range(len(data["bbox"])):                          
                                     if i%2 == 0:
                                         data["bbox"][i] -= min(cropx1, data["bbox"][i])
                                     else:
