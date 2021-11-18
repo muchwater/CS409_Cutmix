@@ -400,7 +400,7 @@ def cut_generator(idx):
         if rand_ind2 < 328:
             rand_ind2 += 1
         else:
-            rand_ind2 = 222
+            rand_ind2 = random.randint(100, 327)
             
     image_name1 = image_root + str(rand_ind) + ".jpg"
     image_name2 = image_root + str(rand_ind2) + ".jpg"
@@ -410,21 +410,49 @@ def cut_generator(idx):
     W2, H2 = img2.size
     size = [W1, H1, W2, H2]
 
-    bbx1 = 0
-    bbx2 = 0
-    bby1 = 0
-    bby2 = 0
+    xlist = []
+    ylist = []
 
     with open('/home/ubuntu/TextFuseNet/datasets/icdar2013_cutmix/train_test.json') as f:
         bbox_data = json.load(f)
-    
     initial = bbox_data["annotations"]
+    
     for data in initial:
         if data["image_id"] == image_id:
-            bbx2 = int(data["bbox"][0])
-            bby2 = int(data["bbox"][1])
+            xlist.append(data["bbox"][0])
+            xlist.append(data["bbox"][2])
+            ylist.append(data["bbox"][1])
+            ylist.append(data["bbox"][3])
+        elif data["image_id"] > image_id:
             break
-    # bbx1, bbx2, bby1, bby2 = min(bbx1, bbx2), max(bbx1, bbx2), min(bby1, bby2), max(bby1, bby2)
+
+    min_x = min(xlist)
+    max_x = max(xlist)
+    min_y = min(ylist)
+    max_y = max(ylist)
+
+    case = random.randint(1, 4)
+    if case == 1:
+        bbx1 = random.randint(0, min_x//3)
+        bby1 = random.randint(0, H1//2)
+        bbx2 = random.randint(2*min_x//3, min_x)
+        bby2 = random.randint(H1//2, H1)
+    elif case == 2:
+        bbx1 = random.randint(0, W1//2)
+        bby1 = random.randint(0, min_y//3)
+        bbx2 = random.randint(W1//2, W1)
+        bby2 = random.randint(2*min_y//3, min_y)
+    elif case == 3:
+        bbx1 = random.randint(max_x, max_x + (W1-max_x)//3)
+        bby1 = random.randint(0, H1//2)
+        bbx2 = random.randint(max_x + 2*(W1-max_x)//3, W1)
+        bby2 = random.randint(H1//2, H1)
+    else:
+        bbx1 = random.randint(0, W1//2)
+        bby1 = random.randint(max_y, max_y + (H1-max_y)//3)
+        bbx2 = random.randint(W1//2, W1)
+        bby2 = random.randint(max_y + 2*(H1-max_y)//3, H1)
+    bbx1, bby1, bbx2, bby2 = min(bbx1, bbx2), min(bby1, bby2), max(bbx1, bbx2), max(bby1, bby2)
 
     crop_img_idx = rand_ind2 - 99
     for data in initial:
@@ -578,6 +606,9 @@ def crop_img_text(idx, bbox, crop, json_data):
                                     data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
                                 else:
                                     data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
+                        data["bbox"][0] = max(0, data["bbox"][0])
+                        data["bbox"][1] = max(0, data["bbox"][1])
+                        data["bbox"][2] = min(bbox[2], data["bbox"][2])
                         data["bbox"][3] = crop[1] + bbox[3]                                 
                         data["image_id"] = image_id
                         data["id"] = text_id
@@ -714,7 +745,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(229):
+for i in range(5):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
