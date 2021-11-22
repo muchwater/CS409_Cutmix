@@ -487,85 +487,16 @@ def image_dict(idx, size):
     image["id"] = idx
     return image
 
-# def overwrap_check(bbox, data, rate):
-    global image_id
-    global text_id
+def translation (bbox, crop, target):
+    width = bbox[0] - crop[0]
+    heigh = bbox[1] - crop[1]
 
-    bbx1 = bbox[0]
-    bby1 = bbox[1]
-    bbx2 = bbox[2]
-    bby2 = bbox[3]
-
-    bbx1_i = int(math.ceil(data["bbox"][0] * 300 / rate[0]))
-    bby1_i = int(math.ceil(data["bbox"][1] * 300 / rate[1]))
-    bbx2_i = int(math.ceil(data["bbox"][2] * 300 / rate[0]))
-    bby2_i = int(math.ceil(data["bbox"][3] * 300 / rate[1]))
-
-    case = 0
-    # x 좌표 먼저 확인
-    if bbx1 < bbx1_i:
-        if bbx2 < bbx1_i:
-            # case 0
-            x1 = bbx1_i
-            x2 = bbx2_i
-        elif bbx2 < bbx2_i:
-            x1 = bbx2
-            x2 = bbx2_i
+    for i in range(len(target)):
+        if i%2 == 0:
+            target[i] += width
         else:
-            # case 0
-            x1 = bbx1_i
-            x2 = bbx2_i
-    elif bbx1 < bbx2_i:
-        if bbx2 <= bbx2_i:
-            x1 = bbx1_i
-            x2 = bbx1
-            # case 1
-            xx1 = bbx2
-            xx2 = bbx2_i
-        else:
-            x1 = bbx1_i
-            x2 = bbx1
-    else:
-        # case 0
-        x1 = bbx1_i
-        x2 = bbx2_i
-
-    # y 좌표 확인후 JSON 파일 추가 or 무시
-    if bby1 < bby1_i:
-        if bby2 < bby1_i:
-            # case 0
-            y1 = bby1_i
-            y2 = bby2_i
-        elif bby2 < bby2_i:
-            y1 = bby2
-            y2 = bby2_i
-        else:
-            y1 = bby1_i
-            y2 = bby2_i
-    elif bby1 < bby2_i:
-        if bby2 < bby2_i:
-            y1 = bby1_i
-            y2 = bby1
-            # case 2
-            yy1 = bby2
-            yy2 = bby2_i
-        else:
-            y1 = bby1_i
-            y2 = bby1
-    else:
-        y1 = bby1_i
-        y2 = bby2_i
-    
-    text = {}
-    text["bbox"] = [x1, y1, x2, y2]
-    text["category_id"] = 1
-    text["id"] = text_id
-    text_id += 1
-    text["image_id"] = image_id
-    text["iscrowd"] = 0
-    text["segmentation"]= [000]
-    text["area"] = float((x2-x1)*(y2-y1))
-    return text
+            target[i] += heigh
+    return target
 
 def crop_img_text(idx, bbox, crop, json_data):
     global image_id
@@ -574,149 +505,215 @@ def crop_img_text(idx, bbox, crop, json_data):
     img2_id = idx - 99
     for data in initial:
         if data["image_id"] == img2_id:
-            data["bbox"] = list(map(int, data["bbox"]))                                     
-            if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + bbox[2]):
-                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):   
-                    for i in range(len(data["bbox"])):                                      
-                        if i%2 == 0:
-                            data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                        else:
-                            data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                    for j in range(len(data["segmentation"])):
-                        for k in range(len(data["segmentation"][j])):
-                            if k%2 == 0:
-                                data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                            else:
-                                data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
+            data["bbox"] = list(map(int, data["bbox"]))
+            for i in range(len(data["segmentation"])):
+                data["segmentation"][i] = list(map(int, data["segmentation"][i]))
+                                     
+            if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + (bbox[2]-bbox[0])):         
+                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + (bbox[3]-bbox[1])):     # case 0
+                    data["bbox"] = translation(bbox, crop, data["bbox"])
+                    for i in range(len(data["segmentation"])):
+                        data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+
                     data["image_id"] = image_id
                     data["id"] = text_id
                     text_id += 1
                     data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                     datasets["annotations"].append(data)
                 else:
-                    if data["category_id"] == 1 and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                  
-                            if i%2 == 0:
-                                data["bbox"][i] -= min(cropx1, data["bbox"][i])                                   
-                            else:
-                                data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                        for j in range(len(data["segmentation"])):
-                            for k in range(len(data["segmentation"][j])):
-                                if k%2 == 0:
-                                    data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                else:
-                                    data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][0] = max(0, data["bbox"][0])
-                        data["bbox"][1] = max(0, data["bbox"][1])
-                        data["bbox"][2] = min(bbox[2], data["bbox"][2])
-                        data["bbox"][3] = crop[1] + bbox[3]                                 
+                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1: # case 1 #data["bbox"][1] <= (crop[1] + bbox[3]) and 
+                        if data["bbox"][1] < crop[1]:
+                            data["bbox"][1] = crop[1]
+                            if data["bbox"][3] <= crop[1]:
+                                continue
+                            elif data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                        elif data["bbox"][1] < (crop[1] + (bbox[3]-bbox[1])):
+                            if data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                        else:
+                            continue
+
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+                            
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            
-                        if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                            for i in range(len(data["bbox"])):                              
-                                if i%2 == 0:
-                                    data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                                else:
-                                    data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                            for j in range(len(data["segmentation"])):
-                                for k in range(len(data["segmentation"][j])):
-                                    if k%2 == 0:
-                                        data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                    else:
-                                        data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                            data["bbox"][3] = crop[1] + bbox[3]
-                            data["image_id"] = image_id
-                            data["id"] = text_id
-                            text_id += 1
-                            data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
-                            datasets["annotations"].append(data)
+                    
+                    if data["category_id"] != 1:
+                        if data["bbox"][1] < crop[1]:
+                            if (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.15):
+                                data["bbox"][1] = crop[1]
+                                if data["bbox"][3] > (crop[1] + bbox[3] - bbox[1]):
+                                    data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
+                            else:
+                                continue
+                        elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
+                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                                data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
+                            else:
+                                continue
+                        else:
+                            continue
+
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+
+                        data["image_id"] = image_id
+                        data["id"] = text_id
+                        text_id += 1
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
+                        datasets["annotations"].append(data)
 
             else:
-                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]):
-                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                  
-                            if i%2 == 0:
-                                data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                            else:
-                                data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                        for j in range(len(data["segmentation"])):
-                            for k in range(len(data["segmentation"][j])):
-                                if k%2 == 0:
-                                    data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                else:
-                                    data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][2] = crop[0] + bbox[2]                                
+                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]): 
+                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1:    # case 2         #and data["bbox"][0] <= (crop[0] + bbox[2]) 
+                        if data["bbox"][0] < crop[0]:
+                            data["bbox"][0] = crop[0]
+                            if data["bbox"][2] <= crop[0]:
+                                continue
+                            elif data["bbox"][2] > (crop[0] + (bbox[2]-bbox[0])):
+                                data["bbox"][2] = (crop[0] + (bbox[2]-bbox[0]))
+                        elif data["bbox"][0] < (crop[0] + (bbox[2]-bbox[0])):
+                            if data["bbox"][2] > (crop[0] + (bbox[2]-bbox[0])):
+                                data["bbox"][2] = (crop[0] + (bbox[2]-bbox[0]))
+                        else:
+                            continue
+                        
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+                                                        
                         data["image_id"] = image_id
                         data["id"] = text_id
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            
-                        if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
-                            for i in range(len(data["bbox"])):                              
-                                if i%2 == 0:
-                                    data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                                else:
-                                    data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                            for j in range(len(data["segmentation"])):
-                                for k in range(len(data["segmentation"][j])):
-                                    if k%2 == 0:
-                                        data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                    else:
-                                        data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                            data["bbox"][2] = crop[0] + bbox[2]
-                            data["image_id"] = image_id
-                            data["id"] = text_id
-                            text_id += 1
-                            data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
-                            datasets["annotations"].append(data)
-                else:
-                    if data["category_id"] == 1 and data["bbox"][0] <= (crop[0] + bbox[2]) and data["bbox"][1] <= (crop[1] + bbox[3]) and bbox[2]*bbox[3] >= data["area"] * 0.1:             
-                        for i in range(len(data["bbox"])):                                 
-                            if i%2 == 0:
-                                data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                            else:
-                                data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                        for j in range(len(data["segmentation"])):
-                            for k in range(len(data["segmentation"][j])):
-                                if k%2 == 0:
-                                    data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                else:
-                                    data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                        data["bbox"][2] = crop[0] + bbox[2]                                 
-                        data["bbox"][3] = crop[1] + bbox[3]
-                        data["image_id"] = image_id
-                        data["id"] = text_id
-                        text_id += 1
-                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
-                        datasets["annotations"].append(data)
-                    if data["category_id"] != 1:                                            
-                        if (data["bbox"][2] - (crop[0] + bbox[2])) <= (data["bbox"][2]-data["bbox"][0]) * 0.1:
-                            if (data["bbox"][3] - (crop[1] + bbox[3])) <= (data["bbox"][3]-data["bbox"][1]) * 0.1:
-                                for i in range(len(data["bbox"])):                          
-                                    if i%2 == 0:
-                                        data["bbox"][i] -= min(cropx1, data["bbox"][i])
-                                    else:
-                                        data["bbox"][i] -= min(cropy1, data["bbox"][i])
-                                for j in range(len(data["segmentation"])):
-                                    for k in range(len(data["segmentation"][j])):
-                                        if k%2 == 0:
-                                            data["segmentation"][j][k] -= min(cropx1, data["segmentation"][j][k])
-                                        else:
-                                            data["segmentation"][j][k] -= min(cropy1, data["segmentation"][j][k])
-                                data["bbox"][2] = crop[0] + bbox[2]
-                                data["bbox"][3] = crop[1] + bbox[3]
-                                data["image_id"] = image_id
-                                data["id"] = text_id
-                                text_id += 1
-                                data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
-                                datasets["annotations"].append(data)
-                    
 
+                    if data["category_id"] != 1:
+                        if data["bbox"][0] < crop[0]:
+                            if (crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15):
+                                data["bbox"][0] = crop[0]
+                                if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
+                                    data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+                            else:
+                                continue
+                        elif data["bbox"][0] < (crop[0] + bbox[2] - bbox[0]):
+                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
+                                data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+                            else:
+                                continue
+                        else:
+                            continue
+
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+
+                        data["image_id"] = image_id
+                        data["id"] = text_id
+                        text_id += 1
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
+                        datasets["annotations"].append(data)
+                
+                else:
+                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1: # case 3
+                        if data["bbox"][0] < crop[0]:
+                            data["bbox"][0] = crop[0]
+                            if data["bbox"][2] < crop[0]:
+                                continue
+                            elif data["bbox"][2] > (crop[0] + (bbox[2]-bbox[0])):
+                                data["bbox"] = (crop[0] + (bbox[2]-bbox[0]))
+                            
+                            if data["bbox"][1] < crop[1]:           # error!!!!!
+                                data["bbox"][1] = crop[1]
+                                if data["bbox"][3] <= crop[1]:
+                                    continue
+                                elif data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                    data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                            elif data["bbox"][1] < (crop[1] + (bbox[3]-bbox[1])):
+                                if data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                    data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                            else:
+                                continue
+                        elif data["bbox"][0] < (crop[0] + (bbox[2]-bbox[0])):
+                            if data["bbox"][2] > (crop[0] + (bbox[2]-bbox[0])):
+                                data["bbox"][2] = (crop[0] + (bbox[2]-bbox[0]))
+                            
+                            if data["bbox"][1] < crop[1]:
+                                data["bbox"][1] = crop[1]
+                                if data["bbox"][3] <= crop[1]:
+                                    continue
+                                elif data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                    data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                            elif data["bbox"][1] < (crop[1] + (bbox[3]-bbox[1])):
+                                if data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
+                                    data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
+                            else:
+                                continue
+
+                        else:
+                            continue
+                        
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+
+                        data["image_id"] = image_id
+                        data["id"] = text_id
+                        text_id += 1
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
+                        datasets["annotations"].append(data)
+                    
+                    if data["category_id"] != 1:
+                        if data["bbox"][0] < crop[0]:
+                            if (crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15):
+                                data["bbox"][0] = crop[0]
+                                if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
+                                    data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+                                
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.1):
+                                    data["bbox"][1] = crop[1]
+                                    if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
+                                        data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                                    data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
+                                else:
+                                    continue
+                            else:
+                                continue
+                        elif data["bbox"][0] < (crop[0] + bbox[2] - bbox[0]):
+                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
+                                data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.15):
+                                    data["bbox"][1] = crop[1]
+                                    if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
+                                        data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                                    data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
+                                else:
+                                    continue
+                            else:
+                                continue
+                        else:
+                            continue
+
+                        data["bbox"] = translation(bbox, crop, data["bbox"])
+                        for i in range(len(data["segmentation"])):
+                            data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
+
+                        data["image_id"] = image_id
+                        data["id"] = text_id
+                        text_id += 1
+                        data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
+                        datasets["annotations"].append(data)
+    
         elif data["image_id"] > img2_id:
             break
         else:
@@ -733,7 +730,11 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
     initial = json_data["annotations"]
     for data in initial:
         if data["image_id"] == image_id:
+
             data["bbox"] = list(map(int, data["bbox"]))
+            for i in range(len(data["segmentation"])):
+                data["segmentation"][i] = list(map(int, data["segmentation"][i]))
+
             data["id"] = text_id
             text_id += 1
             datasets["annotations"].append(data)

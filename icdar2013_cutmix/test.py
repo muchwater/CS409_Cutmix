@@ -37,5 +37,23 @@ import json
 #     json.dump(datasets, outfile)
 
 
-if 1 == 1 and 2 == 2 and 3 == 3:
-    print("test")
+def translation (bbox, crop, target):
+    width = bbox[0] - crop[0]
+    heigh = bbox[1] - crop[1]
+
+    for i in range(len(target)):
+        if i%2 == 0:
+            target[i] += width
+        else:
+            target[i] += heigh
+    
+    return target
+
+bbox = [5, 5, 15, 15]
+crop = [20, 20]
+
+target = [25, 25, 40, 50, 30, 40]
+
+test = translation(bbox, crop, target)
+for i in range(len(target)):
+    print("test: " + str(target[i]))
