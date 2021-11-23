@@ -432,6 +432,7 @@ def cut_generator(idx):
     max_y = max(ylist)
 
     case = random.randint(1, 4)
+    print("case " + str(case))
     if case == 1:
         bbx1 = random.randint(0, min_x//3)
         bby1 = random.randint(0, H1//2)
@@ -441,7 +442,7 @@ def cut_generator(idx):
         bbx1 = random.randint(0, W1//2)
         bby1 = random.randint(0, min_y//3)
         bbx2 = random.randint(W1//2, W1)
-        bby2 = random.randint(2*min_y//3, min_y)
+        bby2 = random.randint(min_y//2, min_y)
     elif case == 3:
         bbx1 = random.randint(max_x, max_x + (W1-max_x)//3)
         bby1 = random.randint(0, H1//2)
@@ -461,15 +462,15 @@ def cut_generator(idx):
             cropy1 = int(data["bbox"][1])
             break
     
-    cropx2 = int(cropx1 + bbx2)
-    cropy2 = int(cropy1 + bby2)
+    cropx2 = int(cropx1 + (bbx2-bbx1))
+    cropy2 = int(cropy1 + (bby2-bby1))
     paste_img = img2.crop((cropx1, cropy1, cropx2, cropy2))
     new_img = Image.new("RGB", (W1, H1))
     new_img.paste(img1, (0, 0))
     new_img.paste(paste_img, (bbx1, bby1))
 
     new_img.save("/home/ubuntu/TextFuseNet/datasets/icdar2013_cutmix/train_images/ICDAR2013_Train_" + str(idx+99) + ".jpg")
-    return rand_ind2, int(bbx1), int(bby1), int(bbx2), int(bby2), size, int(cropx1), int(cropy1)
+    return rand_ind2, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1
 
 text_id = 1
 image_id = 1
@@ -498,19 +499,39 @@ def translation (bbox, crop, target):
             target[i] += heigh
     return target
 
+def check(bbox, crop, width, height):
+    print("bbox")
+    print("x1: " + str(bbox[0]) + " y1: " + str(bbox[1]) + " x2: " + str(bbox[2]) + " y2: " + str(bbox[3]))
+    print("crop")
+    print("cx1: " + str(crop[0]) + " cy1: " + str(crop[1]))
+    print("width: " + str(width))
+    print("height: " + str(height))
+
 def crop_img_text(idx, bbox, crop, json_data):
     global image_id
     global text_id
     initial = json_data["annotations"]
     img2_id = idx - 99
+
+    char_threshold_w = 0.2
+    char_threshold_h = 0.2
+    word_threshold = 0.422
+
+    print("overal x,y")
+    check(bbox, crop, bbox[2]-bbox[0], bbox[3]-bbox[1])
+    print("")
+
     for data in initial:
         if data["image_id"] == img2_id:
+
             data["bbox"] = list(map(int, data["bbox"]))
             for i in range(len(data["segmentation"])):
                 data["segmentation"][i] = list(map(int, data["segmentation"][i]))
-                                     
-            if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + (bbox[2]-bbox[0])):         
+                         
+            if data["bbox"][0] >= crop[0] and data["bbox"][2] <= (crop[0] + (bbox[2]-bbox[0])):
+
                 if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + (bbox[3]-bbox[1])):     # case 0
+                    print("case 0")
                     data["bbox"] = translation(bbox, crop, data["bbox"])
                     for i in range(len(data["segmentation"])):
                         data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -520,12 +541,16 @@ def crop_img_text(idx, bbox, crop, json_data):
                     text_id += 1
                     data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                     datasets["annotations"].append(data)
+                
                 else:
-                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1: # case 1 #data["bbox"][1] <= (crop[1] + bbox[3]) and 
+                    
+                    if data["category_id"] == 1 and (bbox[2]-bbox[0])*(bbox[3]-bbox[1]) >= data["area"] * word_threshold: # case 1
                         if data["bbox"][1] < crop[1]:
                             data["bbox"][1] = crop[1]
                             if data["bbox"][3] <= crop[1]:
                                 continue
+                            elif data["bbox"][3] <= (crop[1] + (bbox[3]-bbox[1])):
+                                pass 
                             elif data["bbox"][3] > (crop[1] + (bbox[3]-bbox[1])):
                                 data["bbox"][3] = (crop[1] + (bbox[3]-bbox[1]))
                         elif data["bbox"][1] < (crop[1] + (bbox[3]-bbox[1])):
@@ -534,6 +559,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                         else:
                             continue
 
+                        print("case 1")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -546,20 +572,21 @@ def crop_img_text(idx, bbox, crop, json_data):
                     
                     if data["category_id"] != 1:
                         if data["bbox"][1] < crop[1]:
-                            if (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
+                            if (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * char_threshold_h):
                                 data["bbox"][1] = crop[1]
                                 if data["bbox"][3] > (crop[1] + bbox[3] - bbox[1]):
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                             else:
                                 continue
                         elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
-                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * 0.15):
+                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * char_threshold_h):
                                 data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                             else:
                                 continue
                         else:
                             continue
 
+                        print("case 1")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -571,8 +598,9 @@ def crop_img_text(idx, bbox, crop, json_data):
                         datasets["annotations"].append(data)
 
             else:
-                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + bbox[3]): 
-                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1:    # case 2         #and data["bbox"][0] <= (crop[0] + bbox[2]) 
+                if data["bbox"][1] >= crop[1] and data["bbox"][3] <= (crop[1] + (bbox[3]-bbox[1])): 
+                    
+                    if data["category_id"] == 1 and (bbox[2]-bbox[0])*(bbox[3]-bbox[1]) >= data["area"] * word_threshold:    # case 2
                         if data["bbox"][0] < crop[0]:
                             data["bbox"][0] = crop[0]
                             if data["bbox"][2] <= crop[0]:
@@ -585,6 +613,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                         else:
                             continue
                         
+                        print("case 2")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -597,20 +626,21 @@ def crop_img_text(idx, bbox, crop, json_data):
 
                     if data["category_id"] != 1:
                         if data["bbox"][0] < crop[0]:
-                            if crop[0] - data["bbox"][0] <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
+                            if crop[0] - data["bbox"][0] <= ((data["bbox"][2] - data["bbox"][0]) * char_threshold_w):
                                 data["bbox"][0] = crop[0]
                                 if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
                                     data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
                             else:
                                 continue
                         elif data["bbox"][0] < (crop[0] + bbox[2] - bbox[0]):
-                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
+                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * char_threshold_w):
                                 data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
                             else:
                                 continue
                         else:
                             continue
-
+                        
+                        print("case 2")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -622,7 +652,8 @@ def crop_img_text(idx, bbox, crop, json_data):
                         datasets["annotations"].append(data)
                 
                 else:
-                    if data["category_id"] == 1 and bbox[2]*bbox[3] >= data["area"] * 0.1: # case 3
+                    
+                    if data["category_id"] == 1 and (bbox[2]-bbox[0])*(bbox[3]-bbox[1]) >= data["area"] * word_threshold: # case 3
                         if data["bbox"][0] < crop[0]:
                             data["bbox"][0] = crop[0]
                             if data["bbox"][2] < crop[0]:
@@ -660,6 +691,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                         else:
                             continue
                         
+                        print("case 3")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -672,30 +704,30 @@ def crop_img_text(idx, bbox, crop, json_data):
                     
                     if data["category_id"] != 1:
                         if data["bbox"][0] < crop[0]:
-                            if crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15:
+                            if crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * char_threshold_w:
                                 data["bbox"][0] = crop[0]
                                 if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
                                     data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
                                 
-                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * char_threshold_h):
                                     data["bbox"][1] = crop[1]
                                     if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
                                         data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
-                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * 0.15:
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * char_threshold_h:
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                                 else:
                                     continue
                             else:
                                 continue
                         elif data["bbox"][0] < (crop[0] + bbox[2] - bbox[0]):
-                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
+                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * char_threshold_w):
                                 data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
 
-                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * char_threshold_h):
                                     data["bbox"][1] = crop[1]
                                     if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
                                         data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
-                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * 0.15:
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * char_threshold_h:
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                                 else:
                                     continue
@@ -703,7 +735,8 @@ def crop_img_text(idx, bbox, crop, json_data):
                                 continue
                         else:
                             continue
-
+                        
+                        print("case 3")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
                         for i in range(len(data["segmentation"])):
                             data["segmentation"][i] = translation(bbox, crop, data["segmentation"][i])
@@ -713,7 +746,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                         text_id += 1
                         data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
                         datasets["annotations"].append(data)
-    
+            
+            check(data["bbox"], crop, bbox[2]-bbox[0], bbox[3]-bbox[1])
+            print("category: " + str(data["category_id"]))
+            # print("Added")
+            print("")
         elif data["image_id"] > img2_id:
             break
         else:
@@ -746,7 +783,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(10):
+for i in range(3):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
