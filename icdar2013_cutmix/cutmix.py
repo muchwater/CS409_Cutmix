@@ -546,14 +546,14 @@ def crop_img_text(idx, bbox, crop, json_data):
                     
                     if data["category_id"] != 1:
                         if data["bbox"][1] < crop[1]:
-                            if (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.15):
+                            if (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
                                 data["bbox"][1] = crop[1]
                                 if data["bbox"][3] > (crop[1] + bbox[3] - bbox[1]):
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                             else:
                                 continue
                         elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
-                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * 0.15):
                                 data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                             else:
                                 continue
@@ -597,7 +597,7 @@ def crop_img_text(idx, bbox, crop, json_data):
 
                     if data["category_id"] != 1:
                         if data["bbox"][0] < crop[0]:
-                            if (crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15):
+                            if crop[0] - data["bbox"][0] <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
                                 data["bbox"][0] = crop[0]
                                 if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
                                     data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
@@ -628,9 +628,9 @@ def crop_img_text(idx, bbox, crop, json_data):
                             if data["bbox"][2] < crop[0]:
                                 continue
                             elif data["bbox"][2] > (crop[0] + (bbox[2]-bbox[0])):
-                                data["bbox"] = (crop[0] + (bbox[2]-bbox[0]))
+                                data["bbox"][2] = (crop[0] + (bbox[2]-bbox[0]))
                             
-                            if data["bbox"][1] < crop[1]:           # error!!!!!
+                            if data["bbox"][1] < crop[1]:           
                                 data["bbox"][1] = crop[1]
                                 if data["bbox"][3] <= crop[1]:
                                     continue
@@ -672,16 +672,16 @@ def crop_img_text(idx, bbox, crop, json_data):
                     
                     if data["category_id"] != 1:
                         if data["bbox"][0] < crop[0]:
-                            if (crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15):
+                            if crop[0] - data["bbox"][0] <= (data["bbox"][2] - data["bbox"][0]) * 0.15:
                                 data["bbox"][0] = crop[0]
                                 if data["bbox"][2] > (crop[0] + bbox[2] - bbox[0]):
                                     data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
                                 
-                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.1):
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
                                     data["bbox"][1] = crop[1]
                                     if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
                                         data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
-                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * 0.15:
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                                 else:
                                     continue
@@ -691,11 +691,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                             if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * 0.15):
                                 data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
 
-                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= (data["bbox"][3] - data["bbox"][1] * 0.15):
+                                if data["bbox"][1] < crop[1] and (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * 0.15):
                                     data["bbox"][1] = crop[1]
                                     if data["bbox"][3] > (crop[0] + bbox[3] - bbox[1]):
                                         data["bbox"][3] = (crop[0] + bbox[3] - bbox[1])
-                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3]-data["bbox"][1]) * 0.15:
+                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]) and (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= (data["bbox"][3] - data["bbox"][1]) * 0.15:
                                     data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                                 else:
                                     continue
@@ -746,7 +746,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(5):
+for i in range(10):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
