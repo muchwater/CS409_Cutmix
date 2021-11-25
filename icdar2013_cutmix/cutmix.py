@@ -645,8 +645,14 @@ def crop_img_text(idx, bbox, crop, json_data):
                         print("step2")
                         # if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) <= (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) * word_threshold_w:
                         #     continue
-                        if bbox[2]-bbox[0] < 30:
-                            pass
+                        if bbox[2] - bbox[0] < 12:
+                            continue
+                        elif bbox[2]-bbox[0] < 30:
+                            if origin_w < 100:
+                                pass
+                            else:
+                                if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                    continue
                         else:
                             if origin_w < 40:
                                 pass
@@ -682,7 +688,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                                 if data["bbox"][2] < crop[0]:
                                     continue
 
-                                if data["bbpx"][2] <= (crop[0] + bbox[2] - bbox[0]):
+                                if data["bbox"][2] <= (crop[0] + bbox[2] - bbox[0]):
                                     pass
                                 else:
                                     if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2]-data["bbox"][0]) * char_threshold_w):
@@ -770,8 +776,14 @@ def crop_img_text(idx, bbox, crop, json_data):
                                 if (data["bbox"][3]-data["bbox"][1]) <= origin_h * word_threshold_h:
                                     continue
                         print("step3")
-                        if bbox[2]-bbox[0] < 30:
-                            pass
+                        if bbox[2] - bbox[0] < 12:
+                            continue
+                        elif bbox[2]-bbox[0] < 30:
+                            if origin_w < 100:
+                                pass
+                            else:
+                                if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                    continue
                         else:
                             if origin_w < 40:
                                 pass
@@ -917,7 +929,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(1):
+for i in range(3):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
