@@ -395,7 +395,7 @@ def cut_generator(idx):
     rand_ind = 99 + idx     
     # rand_ind = random.randint(100, 328)
     rand_ind2 = random.randint(100, 328)
-    # rand_ind2 = 234
+    # rand_ind2 = 240
     if rand_ind == rand_ind2: 
         if rand_ind2 < 328:
             rand_ind2 += 1
@@ -513,11 +513,11 @@ def crop_img_text(idx, bbox, crop, json_data):
     initial = json_data["annotations"]
     img2_id = idx - 99
 
-    char_threshold_w = 0.175
+    char_threshold_w = 0.15
     char_threshold_h = 0.15
     word_threshold = 0.3
     word_threshold_w = 0.15
-    word_threshold_h = 0.725
+    word_threshold_h = 0.72
 
     print("overal x,y")
     check(bbox, crop, bbox[2]-bbox[0], bbox[3]-bbox[1])
@@ -570,34 +570,12 @@ def crop_img_text(idx, bbox, crop, json_data):
                         print("step2")
                         # if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) <= (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) * word_threshold_h:
                         #     continue
-                        # if origin_h < 30:
-                        #     if (data["bbox"][3]-data["bbox"][1]) <= 17:
-                        #         continue
-                        # else:
-                        #     if (data["bbox"][3]-data["bbox"][1]) <= origin_h * word_threshold_h:
-                        #         continue
-
-                        # method by using annotation
-                        test = -1
-                        for info in initial:
-                            if info["image_id"] == img2_id and info["category_id"] != 1:
-                                if info["bbox"][0] >= (crop[0]-10) and info["bbox"][1] >= (crop[1]-10):
-                                    if abs(data["bbox"][1]-info["bbox"][1]) > 10:
-                                        continue
-                                    if abs(data["bbox"][0]-info["bbox"][0]) > 10:
-                                        continue
-                                    test = 0
-                                    print("info bbox")
-                                    print(info["bbox"][0])
-                                    print(info["bbox"][1])
-                                    if ((data["bbox"][3]-data["bbox"][1]) / (info["bbox"][3]-info["bbox"][1])) < 0.85:
-                                        print("test")
-                                        print((data["bbox"][3]-data["bbox"][1]) / (info["bbox"][3]-info["bbox"][1]))
-                                        test = 1
-                                        break
-                        
-                        if test == 1 or test == -1:
-                            continue
+                        if origin_h < 30:
+                            if (data["bbox"][3]-data["bbox"][1]) <= 17:
+                                continue
+                        else:
+                            if (data["bbox"][3]-data["bbox"][1]) <= origin_h * word_threshold_h:
+                                continue
 
                         print("case 1")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
@@ -667,53 +645,30 @@ def crop_img_text(idx, bbox, crop, json_data):
                         print("step2")
                         # if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) <= (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) * word_threshold_w:
                         #     continue
-
-                        # if bbox[2] - bbox[0] < 12:
-                        #     continue
-                        # elif bbox[2]-bbox[0] < 30:
-                        #     if origin_w < 100:
-                        #         pass
-                        #     else:
-                        #         if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
-                        #             continue
-                        # else:
-                        #     if origin_w < 40:
-                        #         pass
-                        #     else:
-                        #         if origin_w > 500:
-                        #             if (bbox[2]-bbox[0]) / origin_w < 0.1:
-                        #                 continue
-                        #             elif (bbox[2]-bbox[0]) / origin_w < 0.2:
-                        #                 pass
-                        #             else:
-                        #                 if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
-                        #                     continue
-
-                        #         else:
-                        #             if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
-                        #                 continue
-                        
-                        # method by using annotation
-                        test = -1
-                        for info in initial:
-                            if info["image_id"] == img2_id and info["category_id"] != 1:
-                                if info["bbox"][0] >= (crop[0]-10) and info["bbox"][1] >= (crop[1]-10):
-                                    if abs(data["bbox"][1]-info["bbox"][1]) > 10:
-                                        continue
-                                    if abs(data["bbox"][0]-info["bbox"][0]) > 10:
-                                        continue
-                                    test = 0
-                                    print("info bbox")
-                                    print(info["bbox"][0])
-                                    print(info["bbox"][1])
-                                    if ((data["bbox"][2]-data["bbox"][0]) / (info["bbox"][2]-info["bbox"][0])) < 0.85:
-                                        print("test")
-                                        print((data["bbox"][2]-data["bbox"][0]) / (info["bbox"][2]-info["bbox"][0]))
-                                        test = 1
-                                        break
-                        
-                        if test == 1 or test == -1:
+                        if bbox[2] - bbox[0] < 12:
                             continue
+                        elif bbox[2]-bbox[0] < 30:
+                            if origin_w < 100:
+                                pass
+                            else:
+                                if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                    continue
+                        else:
+                            if origin_w < 40:
+                                pass
+                            else:
+                                if origin_w > 500:
+                                    if (bbox[2]-bbox[0]) / origin_w < 0.1:
+                                        continue
+                                    elif (bbox[2]-bbox[0]) / origin_w < 0.2:
+                                        pass
+                                    else:
+                                        if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                            continue
+
+                                else:
+                                    if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                        continue
 
                         print("case 2")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
@@ -811,62 +766,33 @@ def crop_img_text(idx, bbox, crop, json_data):
                         print("step2")
                         # if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) <= (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) * 0.07:
                         #     continue
-
-                        # if origin_h < 30:
-                        #     if (data["bbox"][3]-data["bbox"][1]) <= 17:
-                        #         continue
-                        # else:
-                        #     # if (data["bbox"][3]-data["bbox"][1] < 20):
-                        #     #     continue
-                        #     # if (data["bbox"][3]-data["bbox"][1] < 40):
-                        #     #     pass
-                        #     # else:
-                        #     if (data["bbox"][3]-data["bbox"][1]) <= origin_h * word_threshold_h:
-                        #         continue
-
-                        test = -1
-                        for info in initial:
-                            if info["image_id"] == img2_id and info["category_id"] != 1:
-                                if info["bbox"][0] >= (crop[0]-10) and info["bbox"][1] >= (crop[1]-10):
-                                    if abs(data["bbox"][1]-info["bbox"][1]) > 10:
-                                        continue
-                                    if abs(data["bbox"][0]-info["bbox"][0]) > 10:
-                                        continue
-                                    test = 0
-                                    print("info bbox")
-                                    print(info["bbox"][0])
-                                    print(info["bbox"][1])
-                                    if ((data["bbox"][3]-data["bbox"][1]) / (info["bbox"][3]-info["bbox"][1])) < 0.85:
-                                        print("test")
-                                        print((data["bbox"][3]-data["bbox"][1]) / (info["bbox"][3]-info["bbox"][1]))
-                                        test = 1
-                                        break
-                        
-                        if test == 1 or test == -1:
-                            continue
-
+                        if origin_h < 30:
+                            if (data["bbox"][3]-data["bbox"][1]) <= 17:
+                                continue
+                        else:
+                            if (data["bbox"][3]-data["bbox"][1] < 40):
+                                pass
+                            else:
+                                if (data["bbox"][3]-data["bbox"][1]) <= origin_h * word_threshold_h:
+                                    continue
                         print("step3")
-                        test = -1
-                        for info in initial:
-                            if info["image_id"] == img2_id and info["category_id"] != 1:
-                                if info["bbox"][0] >= (crop[0]-10) and info["bbox"][1] >= (crop[1]-10):
-                                    if abs(data["bbox"][1]-info["bbox"][1]) > 10:
-                                        continue
-                                    if abs(data["bbox"][0]-info["bbox"][0]) > 10:
-                                        continue
-                                    test = 0
-                                    print("info bbox")
-                                    print(info["bbox"][0])
-                                    print(info["bbox"][1])
-                                    if ((data["bbox"][2]-data["bbox"][0]) / (info["bbox"][2]-info["bbox"][0])) < 0.85:
-                                        test = 1
-                                        break
-                        
-                        if test == 1 or test == -1:
+                        if bbox[2] - bbox[0] < 12:
                             continue
-                        # print("step4")
-                        # if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) < data["area"] * 0.2:
-                        #     continue
+                        elif bbox[2]-bbox[0] < 30:
+                            if origin_w < 100:
+                                pass
+                            else:
+                                if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                    continue
+                        else:
+                            if origin_w < 40:
+                                pass
+                            else:
+                                if (data["bbox"][2]-data["bbox"][0]) <= origin_w * word_threshold_w:
+                                    continue
+                        print("step4")
+                        if (data["bbox"][2]-data["bbox"][0])*(data["bbox"][3]-data["bbox"][1]) < data["area"] * 0.2:
+                            continue
 
                         print("case 3")
                         data["bbox"] = translation(bbox, crop, data["bbox"])
@@ -910,13 +836,11 @@ def crop_img_text(idx, bbox, crop, json_data):
                                         continue
 
                                 elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
-                                    if data["bbox"][3] < (crop[1] + bbox[3] - bbox[1]):
-                                            pass
+                                    if (bbox[3]-bbox[1]) < (data["bbox"][3]-data["bbox"][1]) * 0.5:
+                                        continue
                                     else:
-                                        if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * char_threshold_h):
+                                        if data["bbox"][3] > (crop[1] + bbox[3] - bbox[1]):
                                             data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
-                                        else:
-                                            continue
                                 else:
                                     continue
                             else:
@@ -1005,7 +929,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
 
 
 
-for i in range(1):
+for i in range(3):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)

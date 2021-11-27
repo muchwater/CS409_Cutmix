@@ -1,4 +1,4 @@
-import json
+# import json
 
 # with open('/home/ubuntu/TextFuseNet/datasets/icdar2013/train.json') as f:
 #     json_data = json.load(f)
@@ -37,23 +37,30 @@ import json
 #     json.dump(datasets, outfile)
 
 
-def translation (bbox, crop, target):
-    width = bbox[0] - crop[0]
-    heigh = bbox[1] - crop[1]
+# def translation (bbox, crop, target):
+#     width = bbox[0] - crop[0]
+#     heigh = bbox[1] - crop[1]
 
-    for i in range(len(target)):
-        if i%2 == 0:
-            target[i] += width
-        else:
-            target[i] += heigh
+#     for i in range(len(target)):
+#         if i%2 == 0:
+#             target[i] += width
+#         else:
+#             target[i] += heigh
     
-    return target
+#     return target
 
-bbox = [5, 5, 15, 15]
-crop = [20, 20]
+# bbox = [5, 5, 15, 15]
+# crop = [20, 20]
 
-target = [25, 25, 40, 50, 30, 40]
+# target = [25, 25, 40, 50, 30, 40]
 
-test = translation(bbox, crop, target)
-for i in range(len(target)):
-    print("test: " + str(target[i]))
+# test = translation(bbox, crop, target)
+# for i in range(len(target)):
+#     print("test: " + str(target[i]))
+
+test = [1, 2, 3, 4, 5]
+for num in test:
+    print(num)
+    if num > 3:
+        for i in test:
+            print(i)
