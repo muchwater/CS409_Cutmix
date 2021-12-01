@@ -436,7 +436,7 @@ def cut_generator(idx):
     max_y = max(ylist)
 
     case = random.randint(1, 4)
-    print("case " + str(case))
+    # print("case " + str(case))
     if case == 1:
         bbx1 = random.randint(0, min_x//3)
         bby1 = random.randint(0, H1//2)
@@ -472,14 +472,14 @@ def cut_generator(idx):
     cropx2 = int(cropx1 + (bbx2-bbx1))
     cropy2 = int(cropy1 + (bby2-bby1))
 
-    print("------")
-    print("image_id:  " + str(99 + image_id))
-    print("width:  " + str(bbx2-bbx1))
-    print("c_w:  " + str(c_w))
-    print((bbx2-bbx1) / c_w)
-    print("height:  " + str(bby2-bby1))
-    print("c_h:  " + str(c_h))
-    print((bby2-bby1) / c_h)
+    # print("------")
+    # print("image_id:  " + str(99 + image_id))
+    # print("width:  " + str(bbx2-bbx1))
+    # print("c_w:  " + str(c_w))
+    # print((bbx2-bbx1) / c_w)
+    # print("height:  " + str(bby2-bby1))
+    # print("c_h:  " + str(c_h))
+    # print((bby2-bby1) / c_h)
 
     state1 = 0
     state2 = 0
@@ -503,18 +503,18 @@ def cut_generator(idx):
                     #     continue
                     # print("FOUND!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-                    print("char w")
-                    print("w:  " + str(int(info["bbox"][2])-int(info["bbox"][0])))
-                    print( (bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0])) )
+                    # print("char w")
+                    # print("w:  " + str(int(info["bbox"][2])-int(info["bbox"][0])))
+                    # print( (bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0])) )
                     if ((bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0]))) < 0.95:
-                        print("checked w")
+                        # print("checked w")
                         state2 = 2
 
-                    print("char h")
-                    print("h:  " + str(int(info["bbox"][3])-int(info["bbox"][1])))
-                    print((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1])))
+                    # print("char h")
+                    # print("h:  " + str(int(info["bbox"][3])-int(info["bbox"][1])))
+                    # print((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1])))
                     if ((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1]))) < 0.95:
-                        print("checked h")
+                        # print("checked h")
                         state2 = 2
                     
                     break
@@ -525,7 +525,7 @@ def cut_generator(idx):
     
     state = 0
     state = state1 + state2
-    print(state)
+    # print(state)
 
     paste_img = img2.crop((cropx1, cropy1, cropx2, cropy2))
     new_img = Image.new("RGB", (W1, H1))
@@ -947,7 +947,7 @@ def crop_img_text(idx, bbox, crop, json_data):
 
                                 if data["bbox"][2] < crop[0]:
                                     continue
-                                if data["bbox"][2] <= (crop[0] + bbox[2] - bbox[0]):
+                                elif data["bbox"][2] <= (crop[0] + bbox[2] - bbox[0]):
                                     pass
                                 else:
                                     if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2]-data["bbox"][0]) * char_threshold_w):
@@ -971,7 +971,7 @@ def crop_img_text(idx, bbox, crop, json_data):
                                         continue
 
                                 elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
-                                    if data["bbox"][3] < (crop[1] + bbox[3] - bbox[1]):
+                                    if data["bbox"][3] <= (crop[1] + bbox[3] - bbox[1]):
                                             pass
                                     else:
                                         if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * char_threshold_h):
@@ -984,26 +984,19 @@ def crop_img_text(idx, bbox, crop, json_data):
                                 continue
 
                         elif data["bbox"][0] < (crop[0] + bbox[2] - bbox[0]):
-                            if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * char_threshold_w):
-                                data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+                            if data["bbox"][2] < (crop[0] + bbox[2] - bbox[0]):
+                                pass
+                            else:
+                                if (data["bbox"][2] - (crop[0] + bbox[2] - bbox[0])) <= ((data["bbox"][2] - data["bbox"][0]) * char_threshold_w):
+                                    data["bbox"][2] = (crop[0] + bbox[2] - bbox[0])
+                                else: continue
 
-                                if data["bbox"][1] < crop[1]:
-                                    if (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * char_threshold_h):
-                                        data["bbox"][1] = crop[1]
+                            if data["bbox"][1] < crop[1]:
+                                if (crop[1] - data["bbox"][1]) <= ((data["bbox"][3] - data["bbox"][1]) * char_threshold_h):
+                                    data["bbox"][1] = crop[1]
 
-                                        if data["bbox"][3] < crop[1]:
-                                            continue
-                                        if data["bbox"][3] < (crop[1] + bbox[3] - bbox[1]):
-                                            pass
-                                        else:
-                                            if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * char_threshold_h):
-                                                data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
-                                            else:
-                                                continue
-                                    else:
+                                    if data["bbox"][3] < crop[1]:
                                         continue
-
-                                elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
                                     if data["bbox"][3] < (crop[1] + bbox[3] - bbox[1]):
                                         pass
                                     else:
@@ -1011,9 +1004,17 @@ def crop_img_text(idx, bbox, crop, json_data):
                                             data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
                                         else:
                                             continue
-
                                 else:
                                     continue
+
+                            elif data["bbox"][1] < (crop[1] + bbox[3] - bbox[1]):
+                                if data["bbox"][3] < (crop[1] + bbox[3] - bbox[1]):
+                                    pass
+                                else:
+                                    if (data["bbox"][3] - (crop[1] + bbox[3] - bbox[1])) <= ((data["bbox"][3]-data["bbox"][1]) * char_threshold_h):
+                                        data["bbox"][3] = (crop[1] + bbox[3] - bbox[1])
+                                    else:
+                                        continue
                             else:
                                 continue
 
