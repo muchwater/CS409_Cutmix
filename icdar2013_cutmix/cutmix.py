@@ -388,6 +388,9 @@ datasets = {
     "annotations":[]
 }
 
+text_id = 1
+image_id = 1
+
 def cut_generator(idx):
     global image_id
 
@@ -411,16 +414,19 @@ def cut_generator(idx):
     xlist = []
     ylist = []
 
-    with open('/home/ubuntu/TextFuseNet/datasets/icdar2013_cutmix/train_test.json') as f:
+    with open('/home/ubuntu/TextFuseNet/datasets/icdar2013/train.json') as f:
         bbox_data = json.load(f)
     initial = bbox_data["annotations"]
     
     for data in initial:
         if data["image_id"] == image_id:
-            xlist.append(data["bbox"][0])
-            xlist.append(data["bbox"][2])
-            ylist.append(data["bbox"][1])
-            ylist.append(data["bbox"][3])
+            if data["category_id"] == 1:
+                xlist.append(data["bbox"][0])
+                xlist.append(data["bbox"][2])
+                ylist.append(data["bbox"][1])
+                ylist.append(data["bbox"][3])
+            else:
+                continue
         elif data["image_id"] > image_id:
             break
 
@@ -430,7 +436,7 @@ def cut_generator(idx):
     max_y = max(ylist)
 
     case = random.randint(1, 4)
-    # print("case " + str(case))
+    print("case " + str(case))
     if case == 1:
         bbx1 = random.randint(0, min_x//3)
         bby1 = random.randint(0, H1//2)
@@ -448,30 +454,87 @@ def cut_generator(idx):
         bby2 = random.randint(H1//2, H1)
     else:
         bbx1 = random.randint(0, W1//2)
-        bby1 = random.randint(max_y, max_y + (H1-max_y)//3)
+        bby1 = random.randint(max_y, max_y + (H1-max_y)//4)
         bbx2 = random.randint(W1//2, W1)
-        bby2 = random.randint(max_y + 2*(H1-max_y)//3, H1)
+        bby2 = random.randint(max_y + 3*(H1-max_y)//4, H1)
     bbx1, bby1, bbx2, bby2 = min(bbx1, bbx2), min(bby1, bby2), max(bbx1, bbx2), max(bby1, bby2)
 
     crop_img_idx = rand_ind2 - 99
+
     for data in initial:
-        if data["image_id"] == crop_img_idx:
+        if data["image_id"] == crop_img_idx and data["category_id"] == 1:
             cropx1 = int(data["bbox"][0])  
             cropy1 = int(data["bbox"][1])
+            c_w = int(int(data["bbox"][2]) - int(data["bbox"][0]))
+            c_h = int(int(data["bbox"][3]) - int(data["bbox"][1]))
             break
     
     cropx2 = int(cropx1 + (bbx2-bbx1))
     cropy2 = int(cropy1 + (bby2-bby1))
+
+    print("------")
+    print("image_id:  " + str(99 + image_id))
+    print("width:  " + str(bbx2-bbx1))
+    print("c_w:  " + str(c_w))
+    print((bbx2-bbx1) / c_w)
+    print("height:  " + str(bby2-bby1))
+    print("c_h:  " + str(c_h))
+    print((bby2-bby1) / c_h)
+
+    state1 = 0
+    state2 = 0
+
+    # if ((bbx2-bbx1) / c_w) < 0.5:
+    #     state1 = 1
+    # elif ((bby2-bby1) / c_h) < 0.7:
+    #     print("pass w")
+    #     state1 = 1
+    # else:
+    #     state1 = 0
+    #     print("pass both")
+
+    for info in initial:
+        if info["image_id"] == crop_img_idx:
+            if info["category_id"] != 1:
+                if int(info["bbox"][0]) >= (cropx1-10) and int(info["bbox"][1]) >= (cropy1-10):
+                    # if abs(cropy1-int(info["bbox"][1])) > 10:
+                    #     continue
+                    # if abs(cropx1-int(info["bbox"][0])) > 10:
+                    #     continue
+                    # print("FOUND!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+                    print("char w")
+                    print("w:  " + str(int(info["bbox"][2])-int(info["bbox"][0])))
+                    print( (bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0])) )
+                    if ((bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0]))) < 0.95:
+                        print("checked w")
+                        state2 = 2
+
+                    print("char h")
+                    print("h:  " + str(int(info["bbox"][3])-int(info["bbox"][1])))
+                    print((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1])))
+                    if ((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1]))) < 0.95:
+                        print("checked h")
+                        state2 = 2
+                    
+                    break
+                else: continue
+            else: continue
+        elif info["image_id"] >= crop_img_idx:
+            break
+    
+    state = 0
+    state = state1 + state2
+    print(state)
+
     paste_img = img2.crop((cropx1, cropy1, cropx2, cropy2))
     new_img = Image.new("RGB", (W1, H1))
     new_img.paste(img1, (0, 0))
-    new_img.paste(paste_img, (bbx1, bby1))
+    if state == 0:
+        new_img.paste(paste_img, (bbx1, bby1))
 
     new_img.save("/home/ubuntu/TextFuseNet/datasets/icdar2013_cutmix/train_images/ICDAR2013_Train_" + str(idx+99) + ".jpg")
-    return rand_ind2, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1
-
-text_id = 1
-image_id = 1
+    return rand_ind2, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1, state
 
 def image_dict(idx, size):
     global image_id
@@ -976,7 +1039,7 @@ def crop_img_text(idx, bbox, crop, json_data):
         else:
             continue
 
-def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
+def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1, state):
     global image_id
     global text_id
     bbox = [bbx1, bby1, bbx2, bby2]
@@ -999,16 +1062,17 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1):
             break
         else:
             continue
-    crop_img_text(idx, bbox, crop, json_data)
+    if state == 0:
+        crop_img_text(idx, bbox, crop, json_data)
 
 
 
 for i in range(5):
-    idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1 = cut_generator(image_id)
+    idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1, state = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
     datasets["images"].append(img)
-    annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1)
+    annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1, state)
     image_id += 1
 
 with open("/home/ubuntu/TextFuseNet/datasets/icdar2013_cutmix/train_pretty.json", 'w') as outfile:
