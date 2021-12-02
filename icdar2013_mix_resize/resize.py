@@ -399,35 +399,35 @@ for img in images:
     width = img["width"]
     height = img["height"]
 
-    img1 = Image.open(img_name).resize((300, 300))
-    img1.save("/home/ubuntu/EfficientNet/datasets/icdar2013/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg")
+    img1 = Image.open(img_name).resize((320, 320))
+    img1.save("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg")
 
-    img["file_name"] = "/home/ubuntu/EfficientNet/datasets/icdar2013/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg"
-    img["width"] = 300
-    img["height"] = 300
+    img["file_name"] = "/home/ubuntu/TextFuseNet/datasets/icdar2013/train_images/ICDAR2013_Train_" + str(img_id+99) + ".jpg"
+    img["width"] = 320
+    img["height"] = 320
     datasets["images"].append(img)
 
     for data in annotations:
         if data["image_id"] == img_id:
             for i in range(len(data["bbox"])):
                 if i%2 == 0:
-                    data["bbox"][i] = int(math.ceil(data["bbox"][i] * 300 / width))
+                    data["bbox"][i] = int(math.ceil(data["bbox"][i] * 320 / width))
                 else:
-                    data["bbox"][i] = int(math.ceil(data["bbox"][i] * 300 / height))
+                    data["bbox"][i] = int(math.ceil(data["bbox"][i] * 320 / height))
             
             for j in range(len(data["segmentation"])):
                 for k in range(len(data["segmentation"][j])):
                     if k%2 == 0:
-                        data["segmentation"][j][k] = int(math.ceil(data["segmentation"][j][k] * 300 / width))
+                        data["segmentation"][j][k] = int(math.ceil(data["segmentation"][j][k] * 320 / width))
                     else:
-                        data["segmentation"][j][k] = int(math.ceil(data["segmentation"][j][k] * 300 / height))
+                        data["segmentation"][j][k] = int(math.ceil(data["segmentation"][j][k] * 320 / height))
             
             data["area"] = float((data["bbox"][2]-data["bbox"][0]) * (data["bbox"][3]-data["bbox"][1]))
 
             datasets["annotations"].append(data)
 
-with open("/home/ubuntu/EfficientNet/datasets/icdar2013/train_pretty.json", 'w') as outfile:
+with open("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train_pretty.json", 'w') as outfile:
     json.dump(datasets, outfile, indent=4)
 
-with open("/home/ubuntu/EfficientNet/datasets/icdar2013/train.json", 'w') as outfile:
+with open("/home/ubuntu/TextFuseNet/datasets/icdar2013_mix_resize/train.json", 'w') as outfile:
     json.dump(datasets, outfile)

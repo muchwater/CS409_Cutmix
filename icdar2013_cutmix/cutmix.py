@@ -438,24 +438,24 @@ def cut_generator(idx):
     case = random.randint(1, 4)
     # print("case " + str(case))
     if case == 1:
-        bbx1 = random.randint(0, min_x//3)
-        bby1 = random.randint(0, H1//2)
-        bbx2 = random.randint(2*min_x//3, min_x)
-        bby2 = random.randint(H1//2, H1)
+        bbx1 = random.randint(0, min_x//4)
+        bby1 = random.randint(0, H1//4)
+        bbx2 = random.randint(3*min_x//4, min_x)
+        bby2 = random.randint(3*H1//4, H1)
     elif case == 2:
-        bbx1 = random.randint(0, W1//2)
-        bby1 = random.randint(0, min_y//3)
-        bbx2 = random.randint(W1//2, W1)
-        bby2 = random.randint(min_y//2, min_y)
+        bbx1 = random.randint(0, W1//4)
+        bby1 = random.randint(0, min_y//4)
+        bbx2 = random.randint(3*W1//4, W1)
+        bby2 = random.randint(3*min_y//4, min_y)
     elif case == 3:
-        bbx1 = random.randint(max_x, max_x + (W1-max_x)//3)
-        bby1 = random.randint(0, H1//2)
-        bbx2 = random.randint(max_x + 2*(W1-max_x)//3, W1)
-        bby2 = random.randint(H1//2, H1)
+        bbx1 = random.randint(max_x, max_x + (W1-max_x)//4)
+        bby1 = random.randint(0, H1//4)
+        bbx2 = random.randint(max_x + 3*(W1-max_x)//4, W1)
+        bby2 = random.randint(3*H1//4, H1)
     else:
-        bbx1 = random.randint(0, W1//2)
+        bbx1 = random.randint(0, W1//4)
         bby1 = random.randint(max_y, max_y + (H1-max_y)//4)
-        bbx2 = random.randint(W1//2, W1)
+        bbx2 = random.randint(3*W1//4, W1)
         bby2 = random.randint(max_y + 3*(H1-max_y)//4, H1)
     bbx1, bby1, bbx2, bby2 = min(bbx1, bbx2), min(bby1, bby2), max(bbx1, bbx2), max(bby1, bby2)
 
@@ -506,17 +506,16 @@ def cut_generator(idx):
                     # print("char w")
                     # print("w:  " + str(int(info["bbox"][2])-int(info["bbox"][0])))
                     # print( (bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0])) )
-                    if ((bbx2-bbx1) / (int(info["bbox"][2])-int(info["bbox"][0]))) < 0.95:
-                        # print("checked w")
+                    if ((bbx2-bbx1) / (3*(int(info["bbox"][2])-int(info["bbox"][0])))) < 0.95:
+                        print("checked w")
                         state2 = 2
 
                     # print("char h")
                     # print("h:  " + str(int(info["bbox"][3])-int(info["bbox"][1])))
                     # print((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1])))
                     if ((bby2-bby1) / (int(info["bbox"][3])-int(info["bbox"][1]))) < 0.95:
-                        # print("checked h")
-                        state2 = 2
-                    
+                        print("checked h")
+                        state2 = 2                    
                     break
                 else: continue
             else: continue
@@ -1068,7 +1067,7 @@ def annotation(idx, bbx1, bby1, bbx2, bby2, cropx1, cropy1, state):
 
 
 
-for i in range(5):
+for i in range(229):
     idx, bbx1, bby1, bbx2, bby2, size, cropx1, cropy1, state = cut_generator(image_id)
     print("mixed image's index: " + str(idx))
     img = image_dict(image_id, size)
